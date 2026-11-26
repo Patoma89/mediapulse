@@ -102,12 +102,28 @@ $Artifacts = @(
 )
 
 $SumLines = @()
+$HashByName = @{}
 foreach ($a in $Artifacts) {
     $hash = (Get-FileHash -Path $a.Path -Algorithm SHA256).Hash.ToLowerInvariant()
     $SumLines += "$hash  $($a.Name)"
+    $HashByName[$a.Name] = $hash
 }
 $SumsPath = Join-Path $ReleaseDir "SHA256SUMS.txt"
 Set-Content -Path $SumsPath -Value $SumLines -Encoding ASCII
+
+# Sync real SHA-256 checksums into WinGet & Scoop manifests
+$WingetInstaller = Join-Path $RootDir "packaging\winget\MediaPulse.MediaPulse.installer.yaml"
+if (Test-Path $WingetInstaller) {
+    $setupHashUpper = $HashByName[$SetupName].ToUpperInvariant()
+    $wingetContent = (Get-Content -Path $WingetInstaller -Raw) -replace 'InstallerSha256:\s*[A-Za-z0-9_]+', "InstallerSha256: $setupHashUpper"
+    Set-Content -Path $WingetInstaller -Value $wingetContent.TrimEnd() -Encoding UTF8
+}
+$ScoopManifest = Join-Path $RootDir "packaging\scoop\mediapulse.json"
+if (Test-Path $ScoopManifest) {
+    $zipHashLower = $HashByName[$ZipName]
+    $scoopContent = (Get-Content -Path $ScoopManifest -Raw) -replace '"hash":\s*"[^"]+"', "`"hash`": `"$zipHashLower`""
+    Set-Content -Path $ScoopManifest -Value $scoopContent.TrimEnd() -Encoding UTF8
+}
 
 Write-Host "`n=== Release MediaPulse v$Version lista ===" -ForegroundColor Green
 foreach ($a in $Artifacts) {

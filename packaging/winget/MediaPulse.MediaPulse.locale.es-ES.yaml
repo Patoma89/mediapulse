@@ -1,0 +1,19 @@
+PackageIdentifier: MediaPulse.MediaPulse
+PackageVersion: 1.0.0
+PackageLocale: es-ES
+Publisher: Patoma89
+PackageName: MediaPulse
+PackageUrl: https://github.com/Patoma89/mediapulse
+License: MIT
+ShortDescription: Conversor local-first de video y audio para Windows con FFmpeg incluido, aceleración GPU NVENC/AMF/QSV y presets para Discord, WhatsApp y Smart TV.
+Tags:
+  - video
+  - converter
+  - ffmpeg
+  - nvenc
+  - discord
+  - whatsapp
+  - mkv
+  - mp4
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

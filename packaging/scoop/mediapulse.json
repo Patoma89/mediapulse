@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "description": "Local-first video and audio converter for Windows x64 with bundled FFmpeg, NVENC/AMF/QSV GPU encoding, Discord/WhatsApp/Smart TV presets, quick trim, and audio extraction.",
+  "homepage": "https://patoma89.github.io/mediapulse/",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/MediaPulse-v1.0.0-win64-portable.zip",
+      "hash": "8e7140c147439ebe6f374d6db35a3ff47bf9514ebfa14596ddec491bd0eef257"
+    }
+  },
+  "bin": "MediaPulse.exe",
+  "shortcuts": [
+    [
+      "MediaPulse.exe",
+      "MediaPulse"
+    ]
+  ],
+  "checkver": "github",
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/Patoma89/mediapulse/releases/download/v$version/MediaPulse-v$version-win64-portable.zip"
+      }
+    },
+    "hash": {
+      "url": "$baseurl/SHA256SUMS.txt"
+    }
+  }
+}

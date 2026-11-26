@@ -1,11 +1,23 @@
 # MediaPulse v1.0.0
 
+[![Release](https://img.shields.io/github/v/release/Patoma89/mediapulse?style=flat-square&color=8B5CF6)](https://github.com/Patoma89/mediapulse/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-10B981?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-0EA5E9?style=flat-square)]()
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-0%25%20Local--First-10B981?style=flat-square)]()
 [![GPU](https://img.shields.io/badge/Hardware-NVENC%20%2F%20AMF%20%2F%20QSV-8B5CF6?style=flat-square)]()
 
+> **Web oficial & Descargas:** https://patoma89.github.io/mediapulse/  
+> **Último Release:** https://github.com/Patoma89/mediapulse/releases/latest
+
 Conversor de video y audio ultrarrápido y **100% local-first** para **Windows 10 / 11 (x64)** de la familia **Patoma89** (mismo stack nativo Go + Wails v2 + React que [NetPulse](https://github.com/Patoma89/netpulse)). Diseñado para resolver en 1 clic los casos reales de uso diario sin lidiar con flags de FFmpeg: **Discord (10/25 MB)**, **WhatsApp**, **Smart TVs (remux MKV → MP4 en segundos)**, tamaño objetivo exacto, recorte rápido y extracción de audio.
+
+### Descarga Rápida (`v1.0.0`)
+
+| Opción | Archivo / Comando | Descripción |
+| :--- | :--- | :--- |
+| **Instalador Windows** | [`MediaPulse-v1.0.0-Setup.exe`](https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/MediaPulse-v1.0.0-Setup.exe) | Instalador Inno Setup con FFmpeg incluido (usuario estándar, sin Admin). |
+| **Portable (.zip)** | [`MediaPulse-v1.0.0-win64-portable.zip`](https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/MediaPulse-v1.0.0-win64-portable.zip) | Carpeta portable lista para usar (`MediaPulse.exe` + `bin\ffmpeg.exe` + `LEEME.txt`). |
+| **Checksums** | [`SHA256SUMS.txt`](https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/SHA256SUMS.txt) | Huellas SHA-256 verificables en PowerShell. |
 
 ---
 
@@ -26,6 +38,7 @@ Conversor de video y audio ultrarrápido y **100% local-first** para **Windows 1
 - **Edición Rápida sin Complicaciones:** recorte Inicio/Fin (`MM:SS` o segundos), cambio de resolución (`1080p`, `720p`, `480p`), FPS (`60`, `30`, `24`), rotación (`90°`, `180°`, `270°`) y **Quitar Audio (Mute)**.
 - **Cola por Lotes + Arrastrar y Soltar:** procesa múltiples archivos en secuencia con progreso en vivo (`%`, velocidad `x`, ETA), escritura atómica temporal y registro local de ahorro de espacio en `%APPDATA%\MediaPulse`.
 - **0% Telemetría, ES/EN y Tema Oscuro/Claro.**
+- Manifiestos **WinGet** (`packaging/winget/`) y **Scoop** (`packaging/scoop/`).
 
 ---
 
