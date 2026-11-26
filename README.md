@@ -1,6 +1,7 @@
 # MediaPulse v1.0.0
 
 [![Release](https://img.shields.io/github/v/release/Patoma89/mediapulse?style=flat-square&color=8B5CF6)](https://github.com/Patoma89/mediapulse/releases/latest)
+[![CI](https://github.com/Patoma89/mediapulse/actions/workflows/ci.yml/badge.svg)](https://github.com/Patoma89/mediapulse/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-10B981?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/Windows-10%20%2F%2011%20x64-0EA5E9?style=flat-square)]()
 [![Zero Telemetry](https://img.shields.io/badge/Telemetry-0%25%20Local--First-10B981?style=flat-square)]()
