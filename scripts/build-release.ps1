@@ -38,7 +38,7 @@ Copy-Item (Join-Path $RootDir "build\ffmpeg\ffprobe.exe") (Join-Path $BinOutDir 
 $ReleaseDir = Join-Path $RootDir "release"
 New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
 
-$Version = "1.0.0"
+$Version = "1.1.0"
 
 $ReadmeText = @"
 MediaPulse v$Version — Portable & Installer Windows x64

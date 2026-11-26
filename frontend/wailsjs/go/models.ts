@@ -568,3 +568,36 @@ export namespace queue {
 
 }
 
+export namespace updater {
+	
+	export class UpdateCheckResult {
+	    currentVersion: string;
+	    latestVersion: string;
+	    updateAvailable: boolean;
+	    releaseUrl: string;
+	    releaseName?: string;
+	    publishedAt?: string;
+	    releaseNotes?: string;
+	    checkedAt: string;
+	    error?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpdateCheckResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.currentVersion = source["currentVersion"];
+	        this.latestVersion = source["latestVersion"];
+	        this.updateAvailable = source["updateAvailable"];
+	        this.releaseUrl = source["releaseUrl"];
+	        this.releaseName = source["releaseName"];
+	        this.publishedAt = source["publishedAt"];
+	        this.releaseNotes = source["releaseNotes"];
+	        this.checkedAt = source["checkedAt"];
+	        this.error = source["error"];
+	    }
+	}
+
+}
+

@@ -16,6 +16,9 @@ interface SidebarProps {
   pendingCount: number;
   historyCount: number;
   running: boolean;
+  updateAvailable?: boolean;
+  latestVersion?: string;
+  onOpenUpdates?: () => void;
 }
 
 export function Sidebar({
@@ -26,6 +29,9 @@ export function Sidebar({
   pendingCount,
   historyCount,
   running,
+  updateAvailable,
+  latestVersion,
+  onOpenUpdates,
 }: SidebarProps) {
   const navItems: Array<{ id: NavSection; label: string; icon: typeof Film }> = [
     { id: 'converter', label: tr(lang, 'navConverter'), icon: Film },
@@ -44,13 +50,28 @@ export function Sidebar({
               <span className="h-2.5 w-2.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8B5CF6]" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-sm font-semibold tracking-tight text-slate-100">
                   MediaPulse
                 </span>
-                <span className="font-mono-telemetry text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-300 border border-white/[0.08]">
+                <button
+                  type="button"
+                  onClick={onOpenUpdates}
+                  title={tr(lang, 'checkUpdates')}
+                  className="font-mono-telemetry text-[10px] px-1.5 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 border border-white/[0.08] cursor-pointer transition-colors"
+                >
                   v{version}
-                </span>
+                </button>
+                {updateAvailable && latestVersion && (
+                  <button
+                    type="button"
+                    onClick={onOpenUpdates}
+                    title={`${tr(lang, 'updateAvailable')} v${latestVersion}`}
+                    className="font-mono-telemetry text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/35 cursor-pointer hover:bg-emerald-500/30 transition-colors"
+                  >
+                    ↑ v{latestVersion}
+                  </button>
+                )}
               </div>
               <p className="text-[11px] text-slate-400 leading-none mt-0.5">
                 {tr(lang, 'subtitle')}

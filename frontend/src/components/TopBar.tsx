@@ -1,5 +1,5 @@
-import { Cpu, CheckCircle2, AlertTriangle, Sun, Moon } from 'lucide-react';
-import type { NavSection, SystemStatus, UILang } from '../types';
+import { Cpu, CheckCircle2, AlertTriangle, Sun, Moon, RefreshCw } from 'lucide-react';
+import type { FFmpegDownloadProgress, NavSection, SystemStatus, UILang } from '../types';
 import { tr } from '../i18n';
 
 interface TopBarProps {
@@ -7,6 +7,8 @@ interface TopBarProps {
   status: SystemStatus;
   lang: UILang;
   theme: 'dark' | 'light';
+  ffmpegDownload: FFmpegDownloadProgress;
+  onClickFFmpegStatus: () => void;
   onToggleLang: () => void;
   onToggleTheme: () => void;
 }
@@ -16,6 +18,8 @@ export function TopBar({
   status,
   lang,
   theme,
+  ffmpegDownload,
+  onClickFFmpegStatus,
   onToggleLang,
   onToggleTheme,
 }: TopBarProps) {
@@ -54,22 +58,42 @@ export function TopBar({
         </div>
 
         {/* FFmpeg Pill */}
-        <div
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
-            status.binaries?.ready
-              ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'
-              : 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-          }`}
-        >
-          {status.binaries?.ready ? (
+        {status.binaries?.ready ? (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border bg-emerald-500/10 text-emerald-300 border-emerald-500/25">
             <CheckCircle2 className="w-3.5 h-3.5" />
-          ) : (
-            <AlertTriangle className="w-3.5 h-3.5" />
-          )}
-          <span>
-            {status.binaries?.ready ? tr(lang, 'ffmpegReady') : tr(lang, 'ffmpegMissing')}
-          </span>
-        </div>
+            <span>{tr(lang, 'ffmpegReady')}</span>
+          </div>
+        ) : (
+          (() => {
+            const isDownloading =
+              ffmpegDownload.stage === 'connecting' ||
+              ffmpegDownload.stage === 'downloading' ||
+              ffmpegDownload.stage === 'extracting' ||
+              ffmpegDownload.stage === 'verifying';
+            return (
+              <button
+                type="button"
+                onClick={onClickFFmpegStatus}
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border cursor-pointer transition-colors ${
+                  isDownloading
+                    ? 'bg-cyan-500/15 text-cyan-200 border-cyan-500/35 hover:bg-cyan-500/25'
+                    : 'bg-rose-500/15 text-rose-300 border-rose-500/30 hover:bg-rose-500/25'
+                }`}
+              >
+                {isDownloading ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                )}
+                <span>
+                  {isDownloading
+                    ? `${tr(lang, 'downloadingFfmpeg')} ${Math.round(ffmpegDownload.percent)}%`
+                    : tr(lang, 'ffmpegMissing')}
+                </span>
+              </button>
+            );
+          })()
+        )}
 
         {/* Language Toggle */}
         <button

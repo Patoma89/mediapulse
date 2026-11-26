@@ -380,7 +380,7 @@
       <a href="#top" class="brand">
         <img src="./appicon.png" alt="MediaPulse Logo" />
         <span>MediaPulse</span>
-        <span id="nav-version" class="pill mono">v1.0.0</span>
+        <span id="nav-version" class="pill mono">v1.1.0</span>
       </a>
       <div class="nav-actions">
         <a href="#features" class="btn btn-ghost" data-i18n="nav_features">Presets &amp; Motor</a>
@@ -406,11 +406,11 @@
       </p>
 
       <div class="cta-row">
-        <a id="dl-setup" href="https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/MediaPulse-v1.0.0-Setup.exe" class="btn btn-primary">
+        <a id="dl-setup" href="https://github.com/Patoma89/mediapulse/releases/download/v1.1.0/MediaPulse-v1.1.0-Setup.exe" class="btn btn-primary">
           <span data-i18n="cta_installer">Descargar Instalador Windows (.exe)</span>
           <span id="setup-size" class="mono" style="opacity:.9">· 60.3 MB</span>
         </a>
-        <a id="dl-zip" href="https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/MediaPulse-v1.0.0-win64-portable.zip" class="btn btn-secondary">
+        <a id="dl-zip" href="https://github.com/Patoma89/mediapulse/releases/download/v1.1.0/MediaPulse-v1.1.0-win64-portable.zip" class="btn btn-secondary">
           <span data-i18n="cta_portable">Portable ZIP (con FFmpeg)</span>
           <span id="zip-size" class="mono" style="opacity:.9">· 81.8 MB</span>
         </a>
@@ -420,8 +420,8 @@
       </div>
 
       <div class="meta-row mono">
-        <span><span data-i18n="release_label">Release actual:</span> <strong id="hero-version">v1.0.0</strong></span>
-        <a id="dl-sums" href="https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256SUMS.txt</a>
+        <span><span data-i18n="release_label">Release actual:</span> <strong id="hero-version">v1.1.0</strong></span>
+        <a id="dl-sums" href="https://github.com/Patoma89/mediapulse/releases/download/v1.1.0/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256SUMS.txt</a>
         <span data-i18n="family_label">Familia Patoma89 · Go + Wails v2</span>
       </div>
 
@@ -484,7 +484,7 @@
           MediaPulse es 100% open-source, se compila con CGO_ENABLED=0 sin compresión UPX y corre totalmente offline. Al ser un proyecto comunitario gratuito sin certificado comercial EV, Windows SmartScreen puede pedir confirmación la primera vez ("Más información" → "Ejecutar de todas formas").
         </p>
         <div class="code-line mono">
-          <span id="verify-cmd">Get-FileHash .\MediaPulse-v1.0.0-Setup.exe -Algorithm SHA256</span>
+          <span id="verify-cmd">Get-FileHash .\MediaPulse-v1.1.0-Setup.exe -Algorithm SHA256</span>
           <button id="copy-hash-cmd" type="button" class="btn" style="padding:6px 12px;font-size:12px" data-i18n="copy_btn">Copiar</button>
         </div>
       </div>
@@ -497,8 +497,18 @@
       <div style="display:grid;gap:14px">
         <div class="changelog-item" style="border-color:rgba(139,92,246,0.45)">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-            <strong class="mono">v1.0.0 · Initial Release</strong>
+            <strong class="mono">v1.1.0 · Open With, Opt-In FFmpeg &amp; Updates</strong>
             <span class="pill pill-green mono" data-i18n="cl_cur">ACTUAL</span>
+          </div>
+          <ul>
+            <li data-i18n="cl_11_1">Soporte CLI / "Abrir con MediaPulse" al iniciar o en segunda instancia, más opción de menú contextual en el instalador Windows (HKCU, sin Admin).</li>
+            <li data-i18n="cl_11_2">Botón opt-in "Descargar FFmpeg" en el aviso de FFmpeg Faltante (descarga oficial con progreso y cancelación a %LOCALAPPDATA%\MediaPulse\bin si copiaste solo MediaPulse.exe).</li>
+            <li data-i18n="cl_11_3">Buscador manual de actualizaciones en Motor &amp; Ajustes que consulta GitHub /releases/latest solo al hacer clic, manteniendo 0% telemetría.</li>
+          </ul>
+        </div>
+        <div class="changelog-item">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <strong class="mono">v1.0.0 · Initial Release</strong>
           </div>
           <ul>
             <li data-i18n="cl_10_1">Motor nativo Go + Wails v2 con FFmpeg &amp; FFprobe 9.1 incluidos en instalador Inno Setup y portable ZIP.</li>
@@ -556,6 +566,9 @@
         cl_title: 'Patch Notes',
         cl_sub: 'Historial completo de versiones públicas.',
         cl_cur: 'ACTUAL',
+        cl_11_1: 'Soporte CLI / "Abrir con MediaPulse" al iniciar o en segunda instancia, más opción de menú contextual en el instalador Windows (HKCU, sin Admin).',
+        cl_11_2: 'Botón opt-in "Descargar FFmpeg" en el aviso de FFmpeg Faltante (descarga oficial con progreso y cancelación a %LOCALAPPDATA%\\MediaPulse\\bin si copiaste solo MediaPulse.exe).',
+        cl_11_3: 'Buscador manual de actualizaciones en Motor & Ajustes que consulta GitHub /releases/latest solo al hacer clic, manteniendo 0% telemetría.',
         cl_10_1: 'Motor nativo Go + Wails v2 con FFmpeg & FFprobe 9.1 incluidos en instalador Inno Setup y portable ZIP.',
         cl_10_2: 'Presets inteligentes: Discord 10 MB / 25 MB, WhatsApp (yuv420p + faststart), TV Smart (remux MKV→MP4 sin recodificar), Tamaño Exacto, Comprimir HQ, Extraer Audio (MP3/M4A/WAV) y Manual.',
         cl_10_3: 'Detección en vivo de GPU NVIDIA NVENC / AMD AMF / Intel QSV con fallback automático a CPU.',
@@ -599,6 +612,9 @@
         cl_title: 'Patch Notes',
         cl_sub: 'Public release history.',
         cl_cur: 'CURRENT',
+        cl_11_1: 'CLI / "Open with MediaPulse" support on launch and second instance, plus an optional Windows Explorer context menu task in the installer (HKCU, no Admin required).',
+        cl_11_2: 'Opt-in "Download FFmpeg" button in the FFmpeg Missing banner (official download with live progress and cancel to %LOCALAPPDATA%\\MediaPulse\\bin if MediaPulse.exe was copied standalone).',
+        cl_11_3: 'Manual opt-in update checker in Engine & Settings that queries GitHub /releases/latest only on click, keeping 0% telemetry.',
         cl_10_1: 'Native Go + Wails v2 engine with FFmpeg & FFprobe 9.1 bundled in Inno Setup installer and portable ZIP.',
         cl_10_2: 'Smart presets: Discord 10 MB / 25 MB, WhatsApp (yuv420p + faststart), Smart TV (lossless MKV→MP4 remux), Exact Size, Compress HQ, Audio Extract (MP3/M4A/WAV), and Custom.',
         cl_10_3: 'Live GPU encoder probing for NVIDIA NVENC / AMD AMF / Intel QSV with automatic CPU fallback.',

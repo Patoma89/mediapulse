@@ -1,16 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
+import { AlertTriangle, Download, FolderOpen, Loader2, X } from 'lucide-react';
 import {
   AddFiles,
   ApplyOptionsToQueued,
   CancelCurrent,
+  CancelFFmpegDownload,
+  CheckForUpdates,
   ClearCompleted,
   ClearHistory,
+  DownloadFFmpeg,
   GetAppInfo,
   GetConfig,
   GetHistory,
   GetPresets,
   GetQueue,
   GetSystemStatus,
+  OpenExternalURL,
   OpenMediaFile,
   PickFFmpegDir,
   PickFiles,
@@ -26,20 +31,23 @@ import {
 import { EventsOn, OnFileDrop, OnFileDropOff } from '../wailsjs/runtime/runtime';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
-import { ConverterView } from './views/ConverterView';
+import { ConverterView, formatBytes } from './views/ConverterView';
 import { PresetsView } from './views/PresetsView';
 import { HistoryView } from './views/HistoryView';
 import { SettingsView } from './views/SettingsView';
+import { tr } from './i18n';
 import type {
   AppConfig,
   AppInfo,
   ConvertOptions,
+  FFmpegDownloadProgress,
   HistorySummary,
   NavSection,
   PresetDefinition,
   PresetID,
   QueueState,
   SystemStatus,
+  UpdateCheckResult,
 } from './types';
 
 function makeDefaultOptions(preset: PresetID, encoderMode: string, outputDir: string): ConvertOptions {
@@ -66,7 +74,7 @@ export default function App() {
   const [section, setSection] = useState<NavSection>('converter');
   const [appInfo, setAppInfo] = useState<AppInfo>({
     name: 'MediaPulse',
-    version: '1.0.0',
+    version: '1.1.0',
     os: 'windows',
     arch: 'amd64',
     configPath: '',
@@ -103,6 +111,15 @@ export default function App() {
     makeDefaultOptions('discord_10mb', 'auto', '')
   );
   const [dropError, setDropError] = useState<string>('');
+  const [ffmpegDownload, setFfmpegDownload] = useState<FFmpegDownloadProgress>({
+    stage: 'idle',
+    percent: 0,
+    downloadedBytes: 0,
+    totalBytes: 0,
+  });
+  const [cliPendingCount, setCliPendingCount] = useState<number>(0);
+  const [checkingUpdates, setCheckingUpdates] = useState<boolean>(false);
+  const [updateResult, setUpdateResult] = useState<UpdateCheckResult | null>(null);
 
   const optionsRef = useRef(activeOptions);
   optionsRef.current = activeOptions;
@@ -138,6 +155,9 @@ export default function App() {
 
     const offSys = EventsOn('system:status', (sys: SystemStatus) => {
       setStatus(sys);
+      if (sys.binaries?.ready) {
+        setCliPendingCount(0);
+      }
     });
     const offQueue = EventsOn('queue:state', (q: QueueState) => {
       setQueue(q);
@@ -164,6 +184,23 @@ export default function App() {
     const offDone = EventsOn('job:done', () => {
       GetHistory().then((h) => setHistory(h as HistorySummary));
     });
+    const offFFmpegDL = EventsOn('ffmpeg:download-progress', (prog: FFmpegDownloadProgress) => {
+      setFfmpegDownload(prog);
+    });
+    const offCLIFiles = EventsOn(
+      'cli:files-received',
+      (payload: { addedCount: number; pending: number; errors?: string[]; needsFFmpeg?: boolean }) => {
+        setSection('converter');
+        if (payload.needsFFmpeg || payload.pending > 0) {
+          setCliPendingCount(payload.pending);
+        } else {
+          setCliPendingCount(0);
+        }
+        if (payload.errors && payload.errors.length > 0) {
+          setDropError(payload.errors.join(' | '));
+        }
+      }
+    );
 
     OnFileDrop((_x, _y, paths) => {
       if (paths && paths.length > 0) {
@@ -182,6 +219,8 @@ export default function App() {
       offQueue();
       offProg();
       offDone();
+      offFFmpegDL();
+      offCLIFiles();
       OnFileDropOff();
     };
   }, []);
@@ -215,6 +254,75 @@ export default function App() {
     setConfig(updated as AppConfig);
   };
 
+  const handleDownloadFFmpeg = async () => {
+    setFfmpegDownload({
+      stage: 'connecting',
+      percent: 0,
+      downloadedBytes: 0,
+      totalBytes: 0,
+    });
+    try {
+      const sys = (await DownloadFFmpeg()) as SystemStatus;
+      setStatus(sys);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.toLowerCase().includes('cancel')) {
+        setFfmpegDownload((prev) => ({ ...prev, stage: 'cancelled', error: '' }));
+      } else {
+        setFfmpegDownload((prev) => ({ ...prev, stage: 'error', error: msg }));
+      }
+    }
+  };
+
+  const handleCancelFFmpegDownload = async () => {
+    await CancelFFmpegDownload();
+  };
+
+  const handlePickAndSaveFFmpegDir = async () => {
+    const dir = await PickFFmpegDir();
+    if (dir) {
+      const updated = (await UpdateConfig({ ...config, customFfmpegDir: dir } as never)) as AppConfig;
+      setConfig(updated);
+      const sys = (await RefreshHardware()) as SystemStatus;
+      setStatus(sys);
+    }
+  };
+
+  const handleCheckUpdates = async () => {
+    setCheckingUpdates(true);
+    try {
+      const res = (await CheckForUpdates()) as UpdateCheckResult;
+      setUpdateResult(res);
+    } finally {
+      setCheckingUpdates(false);
+    }
+  };
+
+  const handleOpenExternalURL = async (url: string) => {
+    await OpenExternalURL(url);
+  };
+
+  const isFFmpegDownloading =
+    ffmpegDownload.stage === 'connecting' ||
+    ffmpegDownload.stage === 'downloading' ||
+    ffmpegDownload.stage === 'extracting' ||
+    ffmpegDownload.stage === 'verifying';
+
+  const stageLabel = () => {
+    switch (ffmpegDownload.stage) {
+      case 'connecting':
+        return tr(config.language, 'ffmpegStageConnecting');
+      case 'downloading':
+        return tr(config.language, 'ffmpegStageDownloading');
+      case 'extracting':
+        return tr(config.language, 'ffmpegStageExtracting');
+      case 'verifying':
+        return tr(config.language, 'ffmpegStageVerifying');
+      default:
+        return '';
+    }
+  };
+
   return (
     <div className="h-screen w-screen flex bg-[#090D16] text-slate-100 overflow-hidden">
       <Sidebar
@@ -225,6 +333,9 @@ export default function App() {
         pendingCount={queue.pending}
         historyCount={history.totalJobs}
         running={queue.running}
+        updateAvailable={Boolean(updateResult?.updateAvailable)}
+        latestVersion={updateResult?.latestVersion}
+        onOpenUpdates={() => setSection('settings')}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -233,11 +344,114 @@ export default function App() {
           status={status}
           lang={config.language}
           theme={config.theme}
+          ffmpegDownload={ffmpegDownload}
+          onClickFFmpegStatus={() => setSection('converter')}
           onToggleLang={handleToggleLang}
           onToggleTheme={handleToggleTheme}
         />
 
         <main className="flex-1 overflow-y-auto mp-scroll p-6">
+          {(!status.binaries?.ready || isFFmpegDownloading) && (
+            <div className="mb-4 rounded-xl bg-rose-500/10 border border-rose-500/30 p-4 space-y-3">
+              <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="h-9 w-9 rounded-lg bg-rose-500/15 border border-rose-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                    {isFFmpegDownloading ? (
+                      <Loader2 className="w-5 h-5 text-cyan-300 animate-spin" />
+                    ) : (
+                      <AlertTriangle className="w-5 h-5 text-rose-300" />
+                    )}
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <h3 className="text-sm font-semibold text-rose-200">
+                      {tr(config.language, 'ffmpegMissingTitle')}
+                    </h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {tr(config.language, 'ffmpegMissingDesc')}
+                    </p>
+                    {cliPendingCount > 0 && (
+                      <p className="text-xs text-amber-300 font-medium">
+                        {cliPendingCount} {tr(config.language, 'cliPendingFfmpeg')}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {!isFFmpegDownloading && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={handlePickAndSaveFFmpegDir}
+                      className="px-3 py-2 rounded-lg text-xs font-medium bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 border border-white/[0.1] flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <FolderOpen className="w-3.5 h-3.5" />
+                      <span>{tr(config.language, 'chooseFfmpegFolder')}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadFFmpeg}
+                      className="px-3.5 py-2 rounded-lg text-xs font-semibold bg-violet-600 hover:bg-violet-500 text-white flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>
+                        {ffmpegDownload.stage === 'error'
+                          ? tr(config.language, 'retryDownload')
+                          : tr(config.language, 'downloadFfmpeg')}
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {isFFmpegDownloading && (
+                <div className="space-y-1.5">
+                  <div className="h-2 w-full rounded-full bg-white/[0.08] overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-violet-500 to-cyan-400 transition-all duration-150"
+                      style={{ width: `${Math.min(100, Math.max(4, ffmpegDownload.percent))}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-[11px] font-mono-telemetry text-slate-300">
+                    <span>
+                      {stageLabel()}
+                      {ffmpegDownload.source ? ` (${ffmpegDownload.source})` : ''}
+                    </span>
+                    <div className="flex items-center gap-3">
+                      <span>
+                        {ffmpegDownload.totalBytes > 0
+                          ? `${formatBytes(ffmpegDownload.downloadedBytes)} / ${formatBytes(ffmpegDownload.totalBytes)} · `
+                          : ffmpegDownload.downloadedBytes > 0
+                          ? `${formatBytes(ffmpegDownload.downloadedBytes)} · `
+                          : ''}
+                        {Math.round(ffmpegDownload.percent)}%
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleCancelFFmpegDownload}
+                        className="px-2 py-0.5 rounded bg-rose-500/20 hover:bg-rose-500/35 text-rose-200 border border-rose-500/35 inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <X className="w-3 h-3" />
+                        <span>{tr(config.language, 'cancelQueue')}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {ffmpegDownload.stage === 'error' && ffmpegDownload.error && (
+                <p className="text-xs text-rose-300 font-mono-telemetry break-all">
+                  {tr(config.language, 'ffmpegDownloadError')} {ffmpegDownload.error}
+                </p>
+              )}
+
+              {ffmpegDownload.stage === 'cancelled' && (
+                <p className="text-xs text-amber-300">
+                  {tr(config.language, 'ffmpegDownloadCancelled')}
+                </p>
+              )}
+            </div>
+          )}
+
           {dropError && (
             <div className="mb-4 rounded-lg bg-rose-500/15 border border-rose-500/30 px-3 py-2 text-xs text-rose-200 flex items-center justify-between">
               <span>{dropError}</span>
@@ -305,8 +519,16 @@ export default function App() {
           {section === 'settings' && (
             <SettingsView
               lang={config.language}
+              appVersion={appInfo.version}
               status={status}
               config={config}
+              ffmpegDownload={ffmpegDownload}
+              onDownloadFFmpeg={handleDownloadFFmpeg}
+              onCancelFFmpegDownload={handleCancelFFmpegDownload}
+              checkingUpdates={checkingUpdates}
+              updateResult={updateResult}
+              onCheckUpdates={handleCheckUpdates}
+              onOpenExternalURL={handleOpenExternalURL}
               onRefreshHardware={async () => {
                 const s = await RefreshHardware();
                 setStatus(s as SystemStatus);

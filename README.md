@@ -1,4 +1,4 @@
-# MediaPulse v1.0.0
+# MediaPulse v1.1.0
 
 [![Release](https://img.shields.io/github/v/release/Patoma89/mediapulse?style=flat-square&color=8B5CF6)](https://github.com/Patoma89/mediapulse/releases/latest)
 [![CI](https://github.com/Patoma89/mediapulse/actions/workflows/ci.yml/badge.svg)](https://github.com/Patoma89/mediapulse/actions/workflows/ci.yml)
@@ -12,13 +12,13 @@
 
 Conversor de video y audio ultrarrápido y **100% local-first** para **Windows 10 / 11 (x64)** de la familia **Patoma89** (mismo stack nativo Go + Wails v2 + React que [NetPulse](https://github.com/Patoma89/netpulse)). Diseñado para resolver en 1 clic los casos reales de uso diario sin lidiar con flags de FFmpeg: **Discord (10/25 MB)**, **WhatsApp**, **Smart TVs (remux MKV → MP4 en segundos)**, tamaño objetivo exacto, recorte rápido y extracción de audio.
 
-### Descarga Rápida (`v1.0.0`)
+### Descarga Rápida (`v1.1.0`)
 
 | Opción | Archivo / Comando | Descripción |
 | :--- | :--- | :--- |
-| **Instalador Windows** | [`MediaPulse-v1.0.0-Setup.exe`](https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/MediaPulse-v1.0.0-Setup.exe) | Instalador Inno Setup con FFmpeg incluido (usuario estándar, sin Admin). |
-| **Portable (.zip)** | [`MediaPulse-v1.0.0-win64-portable.zip`](https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/MediaPulse-v1.0.0-win64-portable.zip) | Carpeta portable lista para usar (`MediaPulse.exe` + `bin\ffmpeg.exe` + `LEEME.txt`). |
-| **Checksums** | [`SHA256SUMS.txt`](https://github.com/Patoma89/mediapulse/releases/download/v1.0.0/SHA256SUMS.txt) | Huellas SHA-256 verificables en PowerShell. |
+| **Instalador Windows** | [`MediaPulse-v1.1.0-Setup.exe`](https://github.com/Patoma89/mediapulse/releases/download/v1.1.0/MediaPulse-v1.1.0-Setup.exe) | Instalador Inno Setup con FFmpeg incluido (usuario estándar, sin Admin). |
+| **Portable (.zip)** | [`MediaPulse-v1.1.0-win64-portable.zip`](https://github.com/Patoma89/mediapulse/releases/download/v1.1.0/MediaPulse-v1.1.0-win64-portable.zip) | Carpeta portable lista para usar (`MediaPulse.exe` + `bin\ffmpeg.exe` + `LEEME.txt`). |
+| **Checksums** | [`SHA256SUMS.txt`](https://github.com/Patoma89/mediapulse/releases/download/v1.1.0/SHA256SUMS.txt) | Huellas SHA-256 verificables en PowerShell. |
 
 ---
 
@@ -38,6 +38,9 @@ Conversor de video y audio ultrarrápido y **100% local-first** para **Windows 1
   - **Extraer Audio:** salida directa en `MP3`, `M4A (AAC)` o `WAV` sin recodificar video.
 - **Edición Rápida sin Complicaciones:** recorte Inicio/Fin (`MM:SS` o segundos), cambio de resolución (`1080p`, `720p`, `480p`), FPS (`60`, `30`, `24`), rotación (`90°`, `180°`, `270°`) y **Quitar Audio (Mute)**.
 - **Cola por Lotes + Arrastrar y Soltar:** procesa múltiples archivos en secuencia con progreso en vivo (`%`, velocidad `x`, ETA), escritura atómica temporal y registro local de ahorro de espacio en `%APPDATA%\MediaPulse`.
+- **Abrir con MediaPulse / CLI:** acepta rutas de video/audio por línea de comandos (`os.Args`) al iniciar o en segunda instancia (con opción de menú contextual `"Abrir con MediaPulse"` en el instalador de Windows).
+- **Descarga Opt-In de FFmpeg:** si ejecutás `MediaPulse.exe` sin la carpeta `bin\`, el aviso de FFmpeg Faltante incluye botón para descargar `ffmpeg.exe` + `ffprobe.exe` oficiales una sola vez en `%LOCALAPPDATA%\MediaPulse\bin` o elegir carpeta manual.
+- **Buscador Manual de Actualizaciones (Opt-In · 0% Telemetría):** botón en *Motor & Ajustes* que consulta GitHub `/releases/latest` solo cuando hacés clic.
 - **0% Telemetría, ES/EN y Tema Oscuro/Claro.**
 - Manifiestos **WinGet** (`packaging/winget/`) y **Scoop** (`packaging/scoop/`).
 
@@ -66,6 +69,6 @@ powershell -ExecutionPolicy Bypass -File .\scripts\build-release.ps1
 ```
 
 Los artefactos finales se generan en `release/`:
-- `MediaPulse-v1.0.0-win64-portable.zip`
-- `MediaPulse-v1.0.0-Setup.exe`
+- `MediaPulse-v1.1.0-win64-portable.zip`
+- `MediaPulse-v1.1.0-Setup.exe`
 - `SHA256SUMS.txt`

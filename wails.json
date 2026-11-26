@@ -13,7 +13,7 @@
   "info": {
     "companyName": "MediaPulse",
     "productName": "MediaPulse",
-    "productVersion": "1.0.0",
+    "productVersion": "1.1.0",
     "copyright": "Local-First Open Community Utility",
     "comments": "Local-First Video Converter with NVENC GPU Acceleration & Smart Presets"
   }

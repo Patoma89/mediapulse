@@ -18,9 +18,10 @@ import (
 	"mediapulse/internal/history"
 	"mediapulse/internal/presets"
 	"mediapulse/internal/queue"
+	"mediapulse/internal/updater"
 )
 
-const appVersion = "1.0.0"
+const appVersion = "1.1.0"
 
 // AppInfo exposes static runtime metadata and local privacy guarantee.
 type AppInfo struct {
@@ -46,14 +47,18 @@ type AddFilesResult struct {
 
 // App is the main Wails backend bound to the React frontend.
 type App struct {
-	ctx        context.Context
-	store      *config.Store
-	histStore  *history.Store
-	configPath string
-	mu         sync.RWMutex
-	bins       ffmpeg.Binaries
-	hw         ffmpeg.HardwareInfo
-	queueMgr   *queue.Manager
+	ctx          context.Context
+	store        *config.Store
+	histStore    *history.Store
+	configPath   string
+	mu           sync.RWMutex
+	bins         ffmpeg.Binaries
+	hw           ffmpeg.HardwareInfo
+	pendingFiles []string
+	queueMgr     *queue.Manager
+	dlMu         sync.Mutex
+	dlCancel     context.CancelFunc
+	dlRunning    bool
 }
 
 // NewApp initializes local stores, locates FFmpeg, and sets up the queue manager.
@@ -115,21 +120,113 @@ func (a *App) startup(ctx context.Context) {
 	go func() {
 		a.RefreshHardware()
 	}()
+
+	cwd, _ := os.Getwd()
+	exe, _ := os.Executable()
+	if initialPaths := extractMediaArgPaths(os.Args[1:], cwd, exe); len(initialPaths) > 0 {
+		go a.enqueueExternalFiles(initialPaths)
+	}
 }
 
 func (a *App) shutdown(ctx context.Context) {
+	a.CancelFFmpegDownload()
 	if a.queueMgr != nil {
 		a.queueMgr.Cancel()
 	}
 }
 
-func (a *App) onSecondInstance(_ options.SecondInstanceData) {
+func (a *App) onSecondInstance(data options.SecondInstanceData) {
 	if a.ctx != nil {
 		wailsruntime.WindowUnminimise(a.ctx)
 		wailsruntime.Show(a.ctx)
 		wailsruntime.WindowSetAlwaysOnTop(a.ctx, true)
 		wailsruntime.WindowSetAlwaysOnTop(a.ctx, false)
 	}
+
+	exe, _ := os.Executable()
+	if paths := extractMediaArgPaths(data.Args, data.WorkingDirectory, exe); len(paths) > 0 {
+		go a.enqueueExternalFiles(paths)
+	}
+}
+
+func (a *App) defaultConvertOptions() presets.ConvertOptions {
+	cfg := a.GetConfig()
+	presetID := presets.PresetID(strings.TrimSpace(cfg.DefaultPreset))
+	if presetID == "" {
+		presetID = presets.PresetDiscord10MB
+	}
+	opts := presets.DefaultOptions(presetID)
+	if strings.TrimSpace(cfg.PreferredEncoder) != "" {
+		opts.EncoderMode = cfg.PreferredEncoder
+	}
+	if strings.TrimSpace(cfg.DefaultOutputDir) != "" {
+		opts.OutputDir = cfg.DefaultOutputDir
+	}
+	return opts
+}
+
+func (a *App) enqueueExternalFiles(paths []string) {
+	if len(paths) == 0 {
+		return
+	}
+
+	a.mu.RLock()
+	ready := a.bins.Ready
+	a.mu.RUnlock()
+
+	if !ready {
+		a.mu.Lock()
+		existing := make(map[string]bool, len(a.pendingFiles))
+		for _, p := range a.pendingFiles {
+			existing[pathKey(p)] = true
+		}
+		for _, p := range paths {
+			k := pathKey(p)
+			if !existing[k] {
+				existing[k] = true
+				a.pendingFiles = append(a.pendingFiles, p)
+			}
+		}
+		pendingCount := len(a.pendingFiles)
+		a.mu.Unlock()
+
+		if a.ctx != nil {
+			wailsruntime.EventsEmit(a.ctx, "cli:files-received", map[string]interface{}{
+				"addedCount":  0,
+				"pending":     pendingCount,
+				"errors":      []string{},
+				"needsFFmpeg": true,
+			})
+		}
+		return
+	}
+
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	added, errs := a.queueMgr.AddFiles(ctx, paths, a.defaultConvertOptions())
+	if a.ctx != nil {
+		wailsruntime.EventsEmit(a.ctx, "cli:files-received", map[string]interface{}{
+			"addedCount":  len(added),
+			"pending":     0,
+			"errors":      errs,
+			"needsFFmpeg": false,
+		})
+	}
+}
+
+func (a *App) flushPendingFiles() {
+	a.mu.Lock()
+	if !a.bins.Ready || len(a.pendingFiles) == 0 {
+		a.mu.Unlock()
+		return
+	}
+	files := a.pendingFiles
+	a.pendingFiles = nil
+	a.mu.Unlock()
+
+	go a.enqueueExternalFiles(files)
 }
 
 // GetAppInfo returns application metadata.
@@ -176,6 +273,7 @@ func (a *App) RefreshHardware() SystemStatus {
 	if a.ctx != nil {
 		wailsruntime.EventsEmit(a.ctx, "system:status", st)
 	}
+	a.flushPendingFiles()
 	return st
 }
 
@@ -364,4 +462,74 @@ func (a *App) ClearHistory() error {
 		return nil
 	}
 	return a.histStore.Clear()
+}
+
+// DownloadFFmpeg downloads FFmpeg and FFprobe into %LOCALAPPDATA%\MediaPulse\bin when requested by the user.
+func (a *App) DownloadFFmpeg() (SystemStatus, error) {
+	a.dlMu.Lock()
+	if a.dlRunning {
+		a.dlMu.Unlock()
+		return a.GetSystemStatus(), fmt.Errorf("ya hay una descarga de FFmpeg en curso")
+	}
+	parentCtx := a.ctx
+	if parentCtx == nil {
+		parentCtx = context.Background()
+	}
+	dlCtx, cancel := context.WithCancel(parentCtx)
+	a.dlRunning = true
+	a.dlCancel = cancel
+	a.dlMu.Unlock()
+
+	defer func() {
+		cancel()
+		a.dlMu.Lock()
+		a.dlRunning = false
+		a.dlCancel = nil
+		a.dlMu.Unlock()
+	}()
+
+	_, err := ffmpeg.Download(dlCtx, ffmpeg.DownloadOptions{
+		UserAgent: "MediaPulse/" + appVersion,
+	}, func(p ffmpeg.DownloadProgress) {
+		if a.ctx != nil {
+			wailsruntime.EventsEmit(a.ctx, "ffmpeg:download-progress", p)
+		}
+	})
+	if err != nil {
+		return a.GetSystemStatus(), err
+	}
+
+	st := a.RefreshHardware()
+	return st, nil
+}
+
+// CancelFFmpegDownload aborts an active opt-in FFmpeg download.
+func (a *App) CancelFFmpegDownload() {
+	a.dlMu.Lock()
+	if a.dlCancel != nil {
+		a.dlCancel()
+	}
+	a.dlMu.Unlock()
+}
+
+// CheckForUpdates manually queries GitHub Releases for a newer version (opt-in, 0% telemetry).
+func (a *App) CheckForUpdates() updater.UpdateCheckResult {
+	ctx := a.ctx
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	return updater.CheckLatest(ctx, appVersion)
+}
+
+// OpenExternalURL opens a validated http/https URL in the user's default browser.
+func (a *App) OpenExternalURL(rawURL string) error {
+	u := strings.TrimSpace(rawURL)
+	if !strings.HasPrefix(u, "https://") && !strings.HasPrefix(u, "http://") {
+		return fmt.Errorf("URL no permitida")
+	}
+	if a.ctx == nil {
+		return fmt.Errorf("contexto no listo")
+	}
+	wailsruntime.BrowserOpenURL(a.ctx, u)
+	return nil
 }

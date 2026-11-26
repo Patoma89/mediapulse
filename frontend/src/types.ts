@@ -177,3 +177,33 @@ export interface HistorySummary {
   totalSavedBytes: number;
   entries: HistoryEntry[];
 }
+
+export interface FFmpegDownloadProgress {
+  stage:
+    | 'idle'
+    | 'connecting'
+    | 'downloading'
+    | 'extracting'
+    | 'verifying'
+    | 'done'
+    | 'error'
+    | 'cancelled';
+  percent: number;
+  downloadedBytes: number;
+  totalBytes: number;
+  source?: string;
+  destDir?: string;
+  error?: string;
+}
+
+export interface UpdateCheckResult {
+  currentVersion: string;
+  latestVersion: string;
+  updateAvailable: boolean;
+  releaseUrl: string;
+  releaseName?: string;
+  publishedAt?: string;
+  releaseNotes?: string;
+  checkedAt: string;
+  error?: string;
+}

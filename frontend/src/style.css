@@ -127,3 +127,8 @@ html[data-theme="light"] .text-amber-200,
 html[data-theme="light"] .text-amber-300 {
   color: #B45309 !important;
 }
+
+html[data-theme="light"] .text-rose-200,
+html[data-theme="light"] .text-rose-300 {
+  color: #BE123C !important;
+}

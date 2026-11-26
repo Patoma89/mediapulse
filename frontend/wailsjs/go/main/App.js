@@ -14,12 +14,24 @@ export function CancelCurrent() {
   return window['go']['main']['App']['CancelCurrent']();
 }
 
+export function CancelFFmpegDownload() {
+  return window['go']['main']['App']['CancelFFmpegDownload']();
+}
+
+export function CheckForUpdates() {
+  return window['go']['main']['App']['CheckForUpdates']();
+}
+
 export function ClearCompleted() {
   return window['go']['main']['App']['ClearCompleted']();
 }
 
 export function ClearHistory() {
   return window['go']['main']['App']['ClearHistory']();
+}
+
+export function DownloadFFmpeg() {
+  return window['go']['main']['App']['DownloadFFmpeg']();
 }
 
 export function GetAppInfo() {
@@ -44,6 +56,10 @@ export function GetQueue() {
 
 export function GetSystemStatus() {
   return window['go']['main']['App']['GetSystemStatus']();
+}
+
+export function OpenExternalURL(arg1) {
+  return window['go']['main']['App']['OpenExternalURL'](arg1);
 }
 
 export function OpenMediaFile(arg1) {
